@@ -14,10 +14,11 @@
             <h1>Gerador de ideias para App por Ia</h1>
 
             <p id="loading-indicator"></p><p id="loading-indicator-text">Carregando...</p>
-            <button id="send-btn">Pedir assunto</button>
 
-            <div id="input-text" class="text-output"></div>
+            <!-- <div id="input-text" class="text-output"></div> -->
             <div id="corrected-text" class="text-output"></div>
+            <button id="send-btn">Peça 5 ideias de App</button>
+
         </div>
 
         <div class="container" style="position: fixed; bottom: 0;  margin-bottom: 10px; background-color: #f8f9fa; text-align: center; text-align: center;">
