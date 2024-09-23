@@ -1,67 +1,36 @@
 $(document).ready(function() {
-    // Carregar o arquivo MD antes da requisição AJAX
+    let treinamento = null; // Variável para armazenar o conteúdo do arquivo
+    $('#loading-indicator').hide(); 
+    $('#loading-indicator-text').hide(); 
+
     fetch('treinamento.md')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Erro ao carregar o arquivo treinamento.md: ' + response.statusText);
             }
-            return response.text(); 
+            return response.text();
         })
-        .then(texto => {            
+        .then(texto => {
+            treinamento = texto; 
 
+            // Anexar o manipulador de eventos click apenas uma vez, após o arquivo ser carregado
             $('#send-btn').click(function() {
-
-                if (texto) {
-                    // Mostrar o indicador de carregamento
+                if (treinamento) {
                     $('#loading-indicator').show(); 
+                    $('#loading-indicator-text').show(); 
 
-                    $.ajax({
-                        url: 'http://localhost:11434/api/chat',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            model: "llama3",
-                            messages: [
-                                { "role": "user", "content": texto } // Usar a instrução extraída do MD + input do usuário
-                            ],
-                            stream: false
-                        }),
-                        success: function(response) {
-                            console.log(response); 
-                        
-                            let correcao = response.message.content; 
-                        
-                            // Processar o JSON da resposta (assumindo que 'correcao' contém o JSON)
-                            try {
-                                let assuntos = JSON.parse(correcao);
-                        
-                                // Criar uma lista HTML dos assuntos
-                                let listaAssuntos = "<ul>";
-                                assuntos.forEach(item => {
-                                    listaAssuntos += `<li class='text-start'>${item.assunto}</li>`;
-                                });
-                                listaAssuntos += "</ul>";
-                        
-                                // Exibir a lista no elemento 'corrected-text'
-                                $('#corrected-text').html(listaAssuntos); 
-                        
-                            } catch (error) {
-                                console.error("Erro ao analisar o JSON:", error);
-                                // Lidar com o erro de forma adequada (exibir mensagem ao usuário, etc.)
-                            }
-                        
+                    chamaIa(treinamento)
+                        .then(() => {
                             $('#loading-indicator').hide(); 
-                        },
-                        error: function(xhr, status, error) {
+                            $('#loading-indicator-text').hide(); 
+
+                        })
+                        .catch(error => {
                             console.error("Erro na requisição AJAX:", error);
-
-                            // Ocultar o indicador de carregamento em caso de erro
                             $('#loading-indicator').hide();
-
                             $('#corrected-text').css('color', 'red');
                             $('#corrected-text').text("Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde."); 
-                        }
-                    });
+                        });
                 }
             }); 
         })
@@ -69,55 +38,45 @@ $(document).ready(function() {
             console.error("Erro ao carregar o arquivo treinamento.md:", error);
             alert("Erro ao carregar o arquivo de treinamento. Por favor, verifique o caminho e tente novamente.");
         });
-});
+    
+    });
+    
+async function chamaIa(treinamento) {
+    try {
+        const response = await $.ajax({
+            url: 'http://localhost:11434/api/chat',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                model: "llama3",
+                messages: [
+                    { "role": "user", "content": treinamento } // Usar a instrução extraída do MD
+                ],
+                stream: false
+            })
+        });
 
+        console.log(response); 
 
-// $(document).ready(function() {
-//     // ... (seu código para carregar o arquivo treinamento.md)
+        let resposta = response.message.content; 
 
-//     // Configurar o reconhecimento de voz
-//     const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
-//     recognition.lang = 'pt-BR'; // Definir o idioma para português do Brasil
+        try {
+            let ideias = JSON.parse(resposta); // Alterado para 'ideias' para refletir a estrutura da resposta
 
-//     let isRecording = false; // Variável para controlar o estado da gravação
+        let listaIdeias = "<ul>"; // Alterado para 'listaIdeias'
+        ideias.forEach(item => {
+            listaIdeias += `<li class='text-start ' style='margin-bottom: 5px;'>${item.nome} - ${item.descricao}</li>`; // Usando 'nome' e 'descrição'
+        });
+        listaIdeias += "</ul>";
 
-//     $('#record-btn').click(function() { // Assumindo que você tem um botão com o ID 'record-btn'
-//         if (!isRecording) {
-//             recognition.start();
-//             isRecording = true;
-//             $('#record-btn').text('Parar Gravação');
-//         } else {
-//             recognition.stop();
-//             isRecording = false;
-//             $('#record-btn').text('Iniciar Gravação');
-//         }
-//     });
+        $('#corrected-text').html(listaIdeias);
 
-//     recognition.onresult = function(event) {
-//         let userInput = event.results[0][0].transcript;
-//         $('#user-input').val(userInput); // Exibir o texto transcrito (opcional)
-
-//         // Enviar a requisição AJAX para a API (similar ao seu código anterior)
-//         // ...
-
-//         // Lidar com a resposta da API
-//         success: function(response) {
-//             console.log(response);
-//             let respostaIA = response.message.content; 
-
-//             // Configurar a síntese de voz
-//             const synth = window.speechSynthesis;
-//             const utterance = new SpeechSynthesisUtterance(respostaIA);
-//             utterance.lang = 'pt-BR';
-
-//             // Reproduzir a resposta em áudio
-//             synth.speak(utterance);
-
-//             // Ocultar o indicador de carregamento
-//             $('#loading-indicator').hide(); 
-
-//             $('#corrected-text').text(respostaIA); // Exibir o texto da resposta (opcional)
-//         },
-//         // ... (tratamento de erros)
-//     };
-// });
+        } catch (error) {
+            console.error("Erro ao analisar o JSON:", error);
+            // Lidar com o erro de forma adequada (exibir mensagem ao usuário, etc.)
+        }
+    } catch (error) {
+        // Lidar com o erro da requisição AJAX aqui, se necessário
+        throw error; // Lançar o erro para que o .catch() externo possa lidar com ele
+    }
+}
