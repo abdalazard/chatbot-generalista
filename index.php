@@ -10,14 +10,11 @@
 <body>
 
     <div style="display: flex; flex-direction: column; gap: 30px;">
-        <!-- <h1 style="text-align: center; color: white;">Gerador de assuntos para encontros</h1> -->
         <div class="container">
             <h1>Gerador de ideias para App por Ia</h1>
 
             <p id="loading-indicator"></p><p id="loading-indicator-text">Carregando...</p>
-            <!-- <textarea id="user-input" placeholder="Digite sua mensagem aqui..." rows="4" cols="50"></textarea> -->
             <button id="send-btn">Pedir assunto</button>
-            <!-- <p id="recording-status"></p> -->
 
             <div id="input-text" class="text-output"></div>
             <div id="corrected-text" class="text-output"></div>
