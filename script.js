@@ -7,19 +7,11 @@ $(document).ready(function() {
             }
             return response.text(); 
         })
-        .then(texto => {
-            // Extrair a frase entre aspas do arquivo MD
-            let instrucao = texto.match(/"([^"]+)"/); 
-            if (instrucao && instrucao.length > 1) {
-                instrucao = instrucao[1]; // Pegar o conteúdo entre aspas
-            } else {
-                instrucao = "sem dados encontrados!"; // Valor padrão caso não encontre a instrução no arquivo
-            }
+        .then(texto => {            
 
             $('#send-btn').click(function() {
-                let userInput = $('#user-input').val().trim();
 
-                if (userInput) {
+                if (texto) {
                     // Mostrar o indicador de carregamento
                     $('#loading-indicator').show(); 
 
@@ -30,18 +22,35 @@ $(document).ready(function() {
                         data: JSON.stringify({
                             model: "llama3",
                             messages: [
-                                { "role": "user", "content": instrucao + "\n" + "Texto do usuário: " +userInput } // Usar a instrução extraída do MD + input do usuário
+                                { "role": "user", "content": texto } // Usar a instrução extraída do MD + input do usuário
                             ],
                             stream: false
                         }),
                         success: function(response) {
-                            console.log(response);
+                            console.log(response); 
+                        
                             let correcao = response.message.content; 
-
-                            // Ocultar o indicador de carregamento
+                        
+                            // Processar o JSON da resposta (assumindo que 'correcao' contém o JSON)
+                            try {
+                                let assuntos = JSON.parse(correcao);
+                        
+                                // Criar uma lista HTML dos assuntos
+                                let listaAssuntos = "<ul>";
+                                assuntos.forEach(item => {
+                                    listaAssuntos += `<li class='text-start'>${item.assunto}</li>`;
+                                });
+                                listaAssuntos += "</ul>";
+                        
+                                // Exibir a lista no elemento 'corrected-text'
+                                $('#corrected-text').html(listaAssuntos); 
+                        
+                            } catch (error) {
+                                console.error("Erro ao analisar o JSON:", error);
+                                // Lidar com o erro de forma adequada (exibir mensagem ao usuário, etc.)
+                            }
+                        
                             $('#loading-indicator').hide(); 
-
-                            $('#corrected-text').text(correcao); 
                         },
                         error: function(xhr, status, error) {
                             console.error("Erro na requisição AJAX:", error);
@@ -53,10 +62,8 @@ $(document).ready(function() {
                             $('#corrected-text').text("Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde."); 
                         }
                     });
-                } else {
-                    alert("Por favor, digite uma mensagem.");
                 }
-            });
+            }); 
         })
         .catch(error => {
             console.error("Erro ao carregar o arquivo treinamento.md:", error);
